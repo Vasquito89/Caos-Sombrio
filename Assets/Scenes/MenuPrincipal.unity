@@ -13,7 +13,7 @@ OcclusionCullingSettings:
 --- !u!104 &2
 RenderSettings:
   m_ObjectHideFlags: 0
-  serializedVersion: 9
+  serializedVersion: 10
   m_Fog: 0
   m_FogColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   m_FogMode: 3
@@ -42,8 +42,8 @@ RenderSettings:
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
-  serializedVersion: 12
-  m_GIWorkflowMode: 1
+  serializedVersion: 13
+  m_BakeOnSceneLoad: 0
   m_GISettings:
     serializedVersion: 2
     m_BounceScale: 1
@@ -66,9 +66,6 @@ LightmapSettings:
     m_LightmapParameters: {fileID: 0}
     m_LightmapsBakeMode: 1
     m_TextureCompression: 1
-    m_FinalGather: 0
-    m_FinalGatherFiltering: 1
-    m_FinalGatherRayCount: 256
     m_ReflectionCompression: 2
     m_MixedBakeMode: 2
     m_BakeBackend: 1
@@ -397,7 +394,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 160, y: 30}
+  m_SizeDelta: {x: 448.8716, y: 55}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &746759791
 MonoBehaviour:
@@ -517,7 +514,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 160, y: 30}
+  m_SizeDelta: {x: 448.8716, y: 55}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &818856921
 MonoBehaviour:
@@ -649,10 +646,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_UiScaleMode: 0
+  m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 800, y: 600}
+  m_ReferenceResolution: {x: 1024, y: 768}
   m_ScreenMatchMode: 0
   m_MatchWidthOrHeight: 0
   m_PhysicalUnit: 3
@@ -921,11 +918,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playlist:
-  - {fileID: 8300000, guid: 3da4271d6ea551a4f98690f628db0e40, type: 3}
-  - {fileID: 8300000, guid: 720218fd733514944ab28db05ecfb5a3, type: 3}
-  - {fileID: 8300000, guid: d83fc95a4b67c5846b28d1595a721f12, type: 3}
-  - {fileID: 8300000, guid: a3e4357318603c64e93c37caa135bc0b, type: 3}
-  - {fileID: 8300000, guid: a575d40cd5b9888418c46845990e70a4, type: 3}
+  - {fileID: 8300000, guid: 689064a60ffa7ae4ab229707139533ac, type: 3}
+  - {fileID: 8300000, guid: 3c707430b24e7db4292355629d44a6f9, type: 3}
   indiceActual: 0
   aleatorio: 1
   isPausedByScene: 0
@@ -938,8 +932,10 @@ AudioSource:
   m_GameObject: {fileID: 1183922126}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 6578807854906764922, guid: 8f73f5e88aa26834f871215d5c10067c, type: 2}
+  OutputAudioMixerGroup: {fileID: 6578807854906764922, guid: 8f73f5e88aa26834f871215d5c10067c,
+    type: 2}
   m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
   m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
@@ -1091,7 +1087,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 160, y: 30}
+  m_SizeDelta: {x: 448.8716, y: 55}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1362959520
 MonoBehaviour:
@@ -1209,8 +1205,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0.000005722, y: 0}
-  m_SizeDelta: {x: 594, y: 334}
+  m_AnchoredPosition: {x: 0.0000076293945, y: -0.00038528}
+  m_SizeDelta: {x: 1024, y: 575.44}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1455226775
 MonoBehaviour:
@@ -1232,7 +1228,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 43b71c243b6e6f744a8976300be581b8, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 2b2c582ae1ca50b4ba18f39d1491b3c7, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -1286,7 +1282,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 160, y: 30}
+  m_SizeDelta: {x: 448.8716, y: 55}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1688869692
 MonoBehaviour:
@@ -1406,8 +1402,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -176, y: -72}
-  m_SizeDelta: {x: 163.6311, y: 118.7362}
+  m_AnchoredPosition: {x: -201.02014, y: -18.4798}
+  m_SizeDelta: {x: 459.5908, y: 225.7766}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1865715154
 MonoBehaviour:
