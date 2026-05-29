@@ -12,6 +12,10 @@ public class FlashlightPickup : MonoBehaviour, IInteractable
     [SerializeField] private bool rotateInScene = true;
     [SerializeField] private float rotationSpeed = 45f;
 
+    private void Start()
+    {
+        playerFlashlightLight.gameObject.SetActive(false);
+    }
 
     private void Update()
     {
