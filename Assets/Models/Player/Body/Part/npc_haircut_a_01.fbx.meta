@@ -1,7 +1,14 @@
 fileFormatVersion: 2
 guid: 1d35e4ca5cce84c489209a330c303156
+AssetOrigin:
+  serializedVersion: 1
+  productId: 326131
+  packageName: npc_casual_set_00
+  packageVersion: 1.0.3
+  assetPath: Assets/npc_casual_set_00/Mesh/npc_haircut_a_01.fbx
+  uploadId: 807672
 ModelImporter:
-  serializedVersion: 22200
+  serializedVersion: 24200
   internalIDToNameTable: []
   externalObjects:
   - first:
@@ -13,7 +20,7 @@ ModelImporter:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
       name: mtl_01
-    second: {fileID: 2100000, guid: 58159088b4330c043b756ac278d08403, type: 2}
+    second: {fileID: 2100000, guid: 020595137a0acce46828c3c8673bf80c, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
@@ -26,8 +33,6 @@ ModelImporter:
     optimizeGameObjects: 0
     removeConstantScaleCurves: 1
     motionNodeName: 
-    rigImportErrors: 
-    rigImportWarnings: 
     animationImportErrors: 
     animationImportWarnings: 
     animationRetargetingWarnings: 
@@ -68,6 +73,9 @@ ModelImporter:
     maxBonesPerVertex: 4
     minBoneWeight: 0.001
     optimizeBones: 1
+    generateMeshLods: 0
+    meshLodGenerationFlags: 0
+    maximumMeshLod: -1
     meshOptimizationFlags: -1
     indexFormat: 0
     secondaryUVAngleDistortion: 8
@@ -852,10 +860,3 @@ ModelImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-AssetOrigin:
-  serializedVersion: 1
-  productId: 326131
-  packageName: npc_casual_set_00
-  packageVersion: 1.0.3
-  assetPath: Assets/npc_casual_set_00/Mesh/npc_haircut_a_01.fbx
-  uploadId: 807672

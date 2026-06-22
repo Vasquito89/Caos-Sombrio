@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -5,73 +6,92 @@ using UnityEngine.AI;
 [RequireComponent(typeof(NavMeshAgent))]
 public class ShadowEnemy : MonoBehaviour
 {
-    public enum ShadowState { Patrol, Chase, Flee }
+    public enum ShadowState { Patrol, Chase, Flee, Dismissed }
 
 
     [Header("Velocidades de Movimiento")]
     [SerializeField] private float patrolSpeed = 1.5f;
-    [SerializeField] private float chaseSpeed = 3.5f;
-    [SerializeField] private float fleeSpeed = 5f;
+    [SerializeField] private float chaseSpeed  = 3.5f;
+    [SerializeField] private float fleeSpeed   = 5f;
 
 
     [Header("Patrullaje")]
     [SerializeField] private Transform[] patrolPoints;
-    [SerializeField] private bool randomPatrol = false;
+    [SerializeField] private bool  randomPatrol       = false;
     [SerializeField] private float waitTimeAtWaypoint = 1.5f;
 
-    [Header("Detección del Jugador")]
-    [SerializeField] private float detectionRadius = 6f;
-    [SerializeField] private bool requireLineOfSight = false;
+    [Header("Confinamiento de Zona (NavMesh Area)")]
+    // Mascara de areas del NavMesh en las que esta sombra tiene permitido moverse.
+    // Usar "Everything" para que use todas las areas (comportamiento por defecto).
+    // Para confinar a una habitacion, crear un Area personalizada en el NavMesh
+    // (ej. "Apartment_01") y seleccionar SOLO esa area en esta mascara.
+    [SerializeField] private LayerMask navMeshAreaMask = -1; // -1 = NavMesh.AllAreas
+
+    [Header("Deteccion del Jugador")]
+    [SerializeField] private float detectionRadius   = 6f;
+    [SerializeField] private bool  requireLineOfSight = false;
     [SerializeField] private LayerMask obstacleLayers;
-    [SerializeField] private string playerTag = "Player";
-    [SerializeField] private float loseTargetTime = 3f;
+    [SerializeField] private string playerTag        = "Player";
+    [SerializeField] private float loseTargetTime    = 3f;
 
 
     [Header("Huida de Linterna")]
-    [SerializeField] private bool fleeFromFlashlight = false;
-    [SerializeField] private float fleeDistance = 10f;
-    [SerializeField] private float fleeCooldown = 2f;
+    [SerializeField] private bool  fleeFromFlashlight = false;
+    [SerializeField] private float fleeDistance        = 10f;
+    [SerializeField] private float fleeCooldown        = 2f;
 
 
     [Header("Visual")]
     [SerializeField] private Renderer shadowRenderer;
-    [SerializeField, Range(0f, 1f)] private float patrolAlpha = 0.8f;
-    [SerializeField, Range(0f, 1f)] private float chaseAlpha = 1f;
-    [SerializeField, Range(0f, 1f)] private float fleeAlpha = 0.2f;
+    [SerializeField, Range(0f, 1f)] private float patrolAlpha   = 0.8f;
+    [SerializeField, Range(0f, 1f)] private float chaseAlpha    = 1f;
+    [SerializeField, Range(0f, 1f)] private float fleeAlpha     = 0.2f;
+    // Duracion de la animacion de disipacion al ser eliminada por la luz
+    [SerializeField] private float dismissFadeDuration = 1.2f;
 
-    private NavMeshAgent    agent;           // Componente de navegación
-    private AnxietyStimulus stimulus;        // Componente de daño psicológico
-    private Transform       playerTransform; // Transform del jugador (se busca en Start)
-    private AudioSource audioEnemy;
+
+    // ─── Referencias internas ─────────────────────────────────────────────────
+    private NavMeshAgent    agent;
+    private AnxietyStimulus stimulus;
+    private Transform       playerTransform;
+    private AudioSource     audioEnemy;
 
     private ShadowState currentState = ShadowState.Patrol;
 
-    // — Patrullaje —
+    // Patrullaje
     private int   currentWaypointIndex = 0;
     private float waypointWaitTimer    = 0f;
     private bool  isWaitingAtWaypoint  = false;
 
-    // — Chase —
-    private float loseTargetTimer = 0f; // Cuenta cuánto tiempo lleva sin ver al jugador
+    // Chase
+    private float loseTargetTimer = 0f;
 
-    // — Flee —
-    private float fleeCooldownTimer = 0f; // Cuenta el cooldown post-linterna
+    // Flee
+    private float fleeCooldownTimer = 0f;
 
+    // Confinamiento dinamico: se pueden sobreescribir los waypoints del prefab
+    // al momento del Instantiate mediante InjectPatrolPoints()
+    private bool waypointsInjected = false;
+
+    // ─── Propiedades publicas ─────────────────────────────────────────────────
     public ShadowState CurrentState => currentState;
+    public bool PlayerDetected      => playerTransform != null &&
+                                       Vector3.Distance(transform.position, playerTransform.position) <= detectionRadius;
 
-    public bool PlayerDetected => playerTransform != null &&
-                                  Vector3.Distance(transform.position, playerTransform.position)
-                                  <= detectionRadius;
 
+    // =========================================================================
+    //  INICIALIZACION
+    // =========================================================================
 
     private void Awake()
     {
         agent    = GetComponent<NavMeshAgent>();
         stimulus = GetComponent<AnxietyStimulus>();
+        audioEnemy = GetComponent<AudioSource>();
 
         if (stimulus == null)
             Debug.LogWarning($"[ShadowEnemy] '{gameObject.name}' no tiene AnxietyStimulus. " +
-                             "El daño psicológico no funcionará. Añadir el componente.");
+                             "El danio psicologico no funcionara. Anadir el componente.");
     }
 
     private void Start()
@@ -84,33 +104,29 @@ public class ShadowEnemy : MonoBehaviour
         }
         else
         {
-            Debug.LogError($"[ShadowEnemy] No se encontró un GameObject con tag '{playerTag}'. " +
-                           "Asegúrate de que el jugador tenga el tag 'Player'.");
+            Debug.LogError($"[ShadowEnemy] No se encontro un GameObject con tag '{playerTag}'. " +
+                           "Asegurate de que el jugador tenga ese tag.");
         }
 
-        // Configurar el agente para estado inicial
+        // Aplicar la mascara de areas del NavMesh para confinar el movimiento a esta zona.
+        // Esto es clave para que una sombra del piso 3 no intente llegar al piso 1.
+        if (navMeshAreaMask != -1)
+            agent.areaMask = navMeshAreaMask;
+
+        // Iniciar en modo patrulla
         TransitionToState(ShadowState.Patrol);
-
-        audioEnemy = GetComponent<AudioSource>();
-        if (audioEnemy != null)
-        {
-            // Si la velocidad del agente es mayor a casi cero, está caminando
-            if (agent.velocity.magnitude > 0.1f)
-            {
-                if (!audioEnemy.isPlaying) audioEnemy.Play();
-            }
-            else
-            {
-                audioEnemy.Stop();
-            }
-        }
     }
+
+
+    // =========================================================================
+    //  UPDATE - Maquina de estados
+    // =========================================================================
 
     private void Update()
     {
-        if (playerTransform == null) return;
+        // No actualizar la IA mientras esta siendo disipada
+        if (currentState == ShadowState.Dismissed) return;
 
-        // Cada estado tiene su propia lógica de evaluación
         switch (currentState)
         {
             case ShadowState.Patrol: UpdatePatrol(); break;
@@ -121,17 +137,17 @@ public class ShadowEnemy : MonoBehaviour
 
     private void UpdatePatrol()
     {
-        // ¿Detectamos al jugador? → CHASE
+        // Prioridad 1: detectar al jugador y pasar a Chase
         if (CanDetectPlayer())
         {
             TransitionToState(ShadowState.Chase);
             return;
         }
 
-        // Sin waypoints: la sombra se queda quieta (válido para sombras estáticas)
+        // Prioridad 2: verificar si hay waypoints asignados
         if (patrolPoints == null || patrolPoints.Length == 0) return;
 
-        // Esperar en el waypoint actual si toca
+        // Si esta esperando en el waypoint, decrementar el timer
         if (isWaitingAtWaypoint)
         {
             waypointWaitTimer -= Time.deltaTime;
@@ -143,10 +159,9 @@ public class ShadowEnemy : MonoBehaviour
             return;
         }
 
-        // Verificar si llegamos al waypoint actual
+        // Verificar si llego al waypoint actual
         if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance)
         {
-            // Llegamos: iniciar espera antes de ir al siguiente
             isWaitingAtWaypoint = true;
             waypointWaitTimer   = waitTimeAtWaypoint;
         }
@@ -154,6 +169,7 @@ public class ShadowEnemy : MonoBehaviour
 
     private void UpdateChase()
     {
+        // Revisar si la linterna apunta a la sombra: huir primero
         if (fleeFromFlashlight && IsBeingIlluminated())
         {
             TransitionToState(ShadowState.Flee);
@@ -163,10 +179,16 @@ public class ShadowEnemy : MonoBehaviour
         if (CanDetectPlayer())
         {
             loseTargetTimer = 0f;
-            // VALIDACIÓN DE SEGURIDAD PARA UNITY 6
-            if (agent.isActiveAndEnabled && agent.isOnNavMesh)
+            // Perseguir solo si el jugador esta dentro de la zona accesible del NavMesh
+            if (IsDestinationReachable(playerTransform.position))
             {
                 agent.SetDestination(playerTransform.position);
+            }
+            else
+            {
+                // El jugador salio de la zona de esta sombra: volver a patrullar
+                Debug.Log($"[ShadowEnemy] '{gameObject.name}': el jugador salio del area accesible. Volviendo a patrullar.");
+                TransitionToState(ShadowState.Patrol);
             }
         }
         else
@@ -181,7 +203,6 @@ public class ShadowEnemy : MonoBehaviour
 
     private void UpdateFlee()
     {
-        // Si la linterna sigue apuntando, refrescar el cooldown
         if (IsBeingIlluminated())
         {
             fleeCooldownTimer = fleeCooldown;
@@ -190,58 +211,70 @@ public class ShadowEnemy : MonoBehaviour
             Vector3 fleeDirection = (transform.position - playerTransform.position).normalized;
             Vector3 fleeTarget    = transform.position + fleeDirection * fleeDistance;
 
-            // Verificar que el punto de huida esté en el NavMesh
-            if (NavMesh.SamplePosition(fleeTarget, out NavMeshHit hit, fleeDistance, NavMesh.AllAreas))
+            // Verificar que el punto de huida este en el NavMesh de esta zona
+            if (NavMesh.SamplePosition(fleeTarget, out NavMeshHit hit, fleeDistance, agent.areaMask))
                 agent.SetDestination(hit.position);
         }
         else
         {
-            // La linterna ya no apunta: contar el cooldown
             fleeCooldownTimer -= Time.deltaTime;
             if (fleeCooldownTimer <= 0f)
             {
-                // Volver a patrullar (no a Chase, para dar respiro al jugador)
                 TransitionToState(ShadowState.Patrol);
             }
         }
     }
 
+
+    // =========================================================================
+    //  TRANSICION DE ESTADOS
+    // =========================================================================
+
     private void TransitionToState(ShadowState newState)
     {
-        if (currentState == newState) return; // Evitar transiciones redundantes
+        if (currentState == newState) return;
 
         currentState = newState;
 
         switch (newState)
         {
             case ShadowState.Patrol:
-                agent.speed        = patrolSpeed;
+                agent.speed            = patrolSpeed;
                 agent.stoppingDistance = 0.5f;
-                loseTargetTimer    = 0f;
-                fleeCooldownTimer  = 0f;
-                // Ir al primer (o siguiente) waypoint
+                loseTargetTimer        = 0f;
+                fleeCooldownTimer      = 0f;
                 MoveToNextWaypoint();
                 SetAlpha(patrolAlpha);
-                Debug.Log($"[ShadowEnemy] '{gameObject.name}' → PATROL");
+                Debug.Log($"[ShadowEnemy] '{gameObject.name}' -> PATROL");
                 break;
 
             case ShadowState.Chase:
-                agent.speed        = chaseSpeed;
-                agent.stoppingDistance = 1.5f; // Quedarse a cierta distancia (no atravesar al jugador)
-                loseTargetTimer    = 0f;
+                agent.speed            = chaseSpeed;
+                agent.stoppingDistance = 1.5f;
+                loseTargetTimer        = 0f;
                 SetAlpha(chaseAlpha);
-                Debug.Log($"[ShadowEnemy] '{gameObject.name}' → CHASE");
+                Debug.Log($"[ShadowEnemy] '{gameObject.name}' -> CHASE");
                 break;
 
             case ShadowState.Flee:
-                agent.speed        = fleeSpeed;
+                agent.speed            = fleeSpeed;
                 agent.stoppingDistance = 0.5f;
-                fleeCooldownTimer  = fleeCooldown;
+                fleeCooldownTimer      = fleeCooldown;
                 SetAlpha(fleeAlpha);
-                Debug.Log($"[ShadowEnemy] '{gameObject.name}' → FLEE");
+                Debug.Log($"[ShadowEnemy] '{gameObject.name}' -> FLEE");
+                break;
+
+            case ShadowState.Dismissed:
+                agent.isStopped = true;
+                Debug.Log($"[ShadowEnemy] '{gameObject.name}' -> DISMISSED");
                 break;
         }
     }
+
+
+    // =========================================================================
+    //  DETECCION DEL JUGADOR
+    // =========================================================================
 
     private bool CanDetectPlayer()
     {
@@ -250,35 +283,44 @@ public class ShadowEnemy : MonoBehaviour
         float dist = Vector3.Distance(transform.position, playerTransform.position);
         if (dist > detectionRadius) return false;
 
-        // Si no se requiere LOS, la proximidad es suficiente
         if (!requireLineOfSight) return true;
 
-        // Verificar línea de visión con Raycast
+        // Verificar linea de vision con Raycast
         Vector3 directionToPlayer = (playerTransform.position - transform.position).normalized;
         Ray     losRay            = new Ray(transform.position + Vector3.up * 0.5f, directionToPlayer);
 
-        // Si el Raycast NO choca con obstáculos antes de llegar al jugador → hay LOS
         bool blocked = Physics.Raycast(losRay, dist, obstacleLayers, QueryTriggerInteraction.Ignore);
         return !blocked;
     }
 
-
     private bool IsBeingIlluminated()
     {
-        // Solo aplica si fleeFromFlashlight está activado Y tenemos el stimulus
         if (!fleeFromFlashlight || stimulus == null) return false;
-
-        // AnxietyStimulus.isBeingRationalized se activa en FlashlightController.cs
-        // No podemos leer el campo privado directamente, pero podemos añadir
-        // una propiedad pública que lo exponga. Ver nota abajo.
         return stimulus.IsBeingRationalized;
     }
+
+    /// <summary>
+    /// Verifica si un destino puede alcanzarse desde la posicion actual
+    /// usando SOLO las areas del NavMesh asignadas a esta sombra.
+    /// Evita que la sombra intente perseguir al jugador a zonas inaccessibles.
+    /// </summary>
+    private bool IsDestinationReachable(Vector3 destination)
+    {
+        NavMeshPath path = new NavMeshPath();
+        // Calcular el camino usando la mascara de areas de esta instancia
+        bool found = NavMesh.CalculatePath(transform.position, destination, agent.areaMask, path);
+        return found && path.status == NavMeshPathStatus.PathComplete;
+    }
+
+
+    // =========================================================================
+    //  PATRULLAJE
+    // =========================================================================
 
     private void MoveToNextWaypoint()
     {
         if (patrolPoints == null || patrolPoints.Length == 0) return;
 
-        // Seleccionar el índice del siguiente waypoint
         if (randomPatrol)
         {
             // Aleatorio pero que no sea el mismo que el actual
@@ -294,24 +336,28 @@ public class ShadowEnemy : MonoBehaviour
             currentWaypointIndex = (currentWaypointIndex + 1) % patrolPoints.Length;
         }
 
-        // Verificar que el waypoint no sea null antes de navegar
         if (patrolPoints[currentWaypointIndex] != null)
             agent.SetDestination(patrolPoints[currentWaypointIndex].position);
         else
             Debug.LogWarning($"[ShadowEnemy] Waypoint [{currentWaypointIndex}] es null. " +
-                             "Verifica que todos los patrolPoints estén asignados en el Inspector.");
+                             "Verifica que todos los patrolPoints esten asignados.");
     }
+
+
+    // =========================================================================
+    //  EFECTOS VISUALES (ALPHA)
+    // =========================================================================
 
     private void SetAlpha(float alpha)
     {
         if (shadowRenderer == null) return;
 
-        // Intentar modificar el alpha del color del material
         MaterialPropertyBlock mpb = new MaterialPropertyBlock();
         shadowRenderer.GetPropertyBlock(mpb);
 
         Color currentColor = mpb.GetColor("_BaseColor");
-        if (currentColor == Color.clear) // No estaba seteado aún
+        // Si no estaba seteado en el MPB, leer del material compartido
+        if (currentColor == Color.clear)
             currentColor = shadowRenderer.sharedMaterial.GetColor("_BaseColor");
 
         currentColor.a = alpha;
@@ -319,15 +365,104 @@ public class ShadowEnemy : MonoBehaviour
         shadowRenderer.SetPropertyBlock(mpb);
     }
 
+    /// <summary>
+    /// Corrutina que reduce el alpha gradualmente hasta 0 y luego destruye el objeto.
+    /// Produce el efecto de disipacion de la sombra al encender la luz.
+    /// </summary>
+    private IEnumerator FadeOutAndDestroy()
+    {
+        if (shadowRenderer == null)
+        {
+            Destroy(gameObject);
+            yield break;
+        }
 
+        // Leer el alpha actual para partir desde ahi
+        MaterialPropertyBlock mpb = new MaterialPropertyBlock();
+        shadowRenderer.GetPropertyBlock(mpb);
+        Color startColor = mpb.GetColor("_BaseColor");
+        if (startColor == Color.clear)
+            startColor = shadowRenderer.sharedMaterial.GetColor("_BaseColor");
+
+        float elapsed = 0f;
+        while (elapsed < dismissFadeDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t     = elapsed / dismissFadeDuration;
+            float alpha = Mathf.Lerp(startColor.a, 0f, t);
+            SetAlpha(alpha);
+            yield return null;
+        }
+
+        Destroy(gameObject);
+    }
+
+
+    // =========================================================================
+    //  METODOS PUBLICOS DE CONTROL
+    // =========================================================================
+
+    /// <summary>
+    /// Inyecta waypoints de forma dinamica al ser instanciada por ShadowSpawnerTrigger.
+    /// Permite que cada sombra reciba su set de rutas sin modificar el prefab.
+    /// Si ya se inyectaron waypoints, esta llamada no tiene efecto.
+    /// </summary>
+    public void InjectPatrolPoints(Transform[] newWaypoints)
+    {
+        if (waypointsInjected)
+        {
+            Debug.LogWarning($"[ShadowEnemy] '{gameObject.name}': InjectPatrolPoints() llamado mas de una vez. Ignorando.");
+            return;
+        }
+
+        patrolPoints     = newWaypoints;
+        waypointsInjected = true;
+        currentWaypointIndex = 0;
+
+        // Si ya estamos en Patrol, ir al primer waypoint inmediatamente
+        if (currentState == ShadowState.Patrol && patrolPoints.Length > 0)
+        {
+            if (patrolPoints[0] != null)
+                agent.SetDestination(patrolPoints[0].position);
+        }
+
+        Debug.Log($"[ShadowEnemy] '{gameObject.name}': {newWaypoints.Length} waypoints inyectados.");
+    }
+
+    /// <summary>
+    /// Disuelta la sombra con una animacion de desvanecimiento y la destruye.
+    /// Conectar a LightSwitchInteractable para eliminar la sombra al encender la luz.
+    /// Equivale al antiguo 'DesactivarSombra()' mencionado en el GDD.
+    /// </summary>
+    public void DismissShadow()
+    {
+        if (currentState == ShadowState.Dismissed) return;
+
+        TransitionToState(ShadowState.Dismissed);
+        StartCoroutine(FadeOutAndDestroy());
+        Debug.Log($"[ShadowEnemy] '{gameObject.name}' disipandose por la luz...");
+    }
+
+    /// <summary>
+    /// Alias en espaniol para compatibilidad con la nomenclatura del GDD.
+    /// Llama internamente a DismissShadow().
+    /// </summary>
+    public void DesactivarSombra() => DismissShadow();
+
+    /// <summary>
+    /// Fuerza una transicion de estado desde sistemas externos (eventos de climax, etc).
+    /// </summary>
     public void ForceState(ShadowState state)
     {
         TransitionToState(state);
     }
 
+    /// <summary>
+    /// Teleporta la sombra a una nueva posicion valida del NavMesh y vuelve a patrullar.
+    /// </summary>
     public void Teleport(Vector3 position)
     {
-        if (NavMesh.SamplePosition(position, out NavMeshHit hit, 2f, NavMesh.AllAreas))
+        if (NavMesh.SamplePosition(position, out NavMeshHit hit, 2f, agent.areaMask))
         {
             agent.Warp(hit.position);
             TransitionToState(ShadowState.Patrol);
@@ -335,17 +470,22 @@ public class ShadowEnemy : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning($"[ShadowEnemy] No se encontró un punto válido del NavMesh cerca de {position}.");
+            Debug.LogWarning($"[ShadowEnemy] No se encontro un punto valido del NavMesh cerca de {position}.");
         }
     }
 
+
+    // =========================================================================
+    //  GIZMOS DE EDITOR
+    // =========================================================================
+
     private void OnDrawGizmosSelected()
     {
-        // Radio de detección
+        // Radio de deteccion
         Gizmos.color = new Color(1f, 0.2f, 0.2f, 0.25f);
         Gizmos.DrawWireSphere(transform.position, detectionRadius);
 
-        // Líneas hacia los waypoints
+        // Lineas hacia los waypoints
         if (patrolPoints != null)
         {
             Gizmos.color = new Color(0.5f, 0.5f, 1f, 0.8f);
@@ -356,17 +496,18 @@ public class ShadowEnemy : MonoBehaviour
                 if (i > 0 && patrolPoints[i - 1] != null)
                     Gizmos.DrawLine(patrolPoints[i - 1].position, patrolPoints[i].position);
             }
-            // Conectar el último con el primero (loop visual)
+            // Conectar el ultimo con el primero (loop visual)
             if (patrolPoints.Length > 1 && patrolPoints[0] != null && patrolPoints[patrolPoints.Length - 1] != null)
                 Gizmos.DrawLine(patrolPoints[patrolPoints.Length - 1].position, patrolPoints[0].position);
         }
 
-        // Mostrar estado actual en color
+        // Indicador del estado actual
         switch (currentState)
         {
-            case ShadowState.Patrol: Gizmos.color = Color.blue;   break;
-            case ShadowState.Chase:  Gizmos.color = Color.red;    break;
-            case ShadowState.Flee:   Gizmos.color = Color.yellow; break;
+            case ShadowState.Patrol:    Gizmos.color = Color.blue;   break;
+            case ShadowState.Chase:     Gizmos.color = Color.red;    break;
+            case ShadowState.Flee:      Gizmos.color = Color.yellow; break;
+            case ShadowState.Dismissed: Gizmos.color = Color.gray;   break;
         }
         Gizmos.DrawWireSphere(transform.position, 0.3f);
     }

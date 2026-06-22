@@ -239,6 +239,21 @@ public class RoomLightFlicker : MonoBehaviour
         Debug.Log($"[RoomLightFlicker] '{gameObject.name}' — Apagón forzado ({duration:F2}s).");
     }
 
+    public void StabilizeLight()
+    {
+        // Estabilizar la luz al 100% de intensidad sin parpadeo
+        isDisabledBySwitch = true;
+        isInBlackout = false;
+
+        if (roomLight != null)
+        {
+            roomLight.enabled = true;
+            roomLight.intensity = resolvedBaseIntensity;
+        }
+
+        Debug.Log($"[RoomLightFlicker] '{gameObject.name}' — Luz estabilizada al 100%.");
+    }
+
     private void OnDrawGizmosSelected()
     {
         // Dibujar un ícono de "nivel de ansiedad" en la luz para identificarla en la escena

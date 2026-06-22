@@ -7,6 +7,10 @@ public class FlashlightController : MonoBehaviour
     [SerializeField] private Light flashlightLight;
     [SerializeField] private float baseIntensity = 2.5f;
 
+    [Header("Sistema de Batería")]
+    [SerializeField, Range(0f, 100f)] private float batteryLevel = 100f;
+    [SerializeField] private float batteryConsumptionRate = 5f; // % por segundo
+
     [Header("Raycast de Racionalización")]
     [SerializeField] private float rationalizationRange = 8f;
     [SerializeField] private LayerMask stimulusLayers;
@@ -24,6 +28,9 @@ public class FlashlightController : MonoBehaviour
     private bool isOn = false;           // Estado actual de la linterna
     private float flickerTimer = 0f;     // Temporizador para el parpadeo (basado en seno)
     private Camera playerCamera;         // Referencia a la cámara para el Raycast
+
+    // — Evento de cambio de batería —
+    public System.Action<float> onBatteryChanged;
 
     private void Start()
     {
@@ -44,12 +51,30 @@ public class FlashlightController : MonoBehaviour
 
         if (isOn)
         {
+            // Consumir batería mientras está encendida
+            ConsumeBattery();
+
             HandleRationalizationRaycast();
             HandlePassiveAnxietyReduction();
 
             if (flickerWithAnxiety)
                 HandleFlicker();
         }
+    }
+
+    private void ConsumeBattery()
+    {
+        batteryLevel -= batteryConsumptionRate * Time.deltaTime;
+
+        if (batteryLevel <= 0f)
+        {
+            batteryLevel = 0f;
+            TurnOff();
+            Debug.Log("[FlashlightController] ¡Batería agotada!");
+        }
+
+        // Notificar cambio de batería
+        onBatteryChanged?.Invoke(batteryLevel);
     }
 
     private void HandleToggleInput()
@@ -114,7 +139,7 @@ public class FlashlightController : MonoBehaviour
         flashlightLight.intensity = Mathf.Max(0f, flashlightLight.intensity);
     }
 
-   
+
     public void TurnOn()
     {
         isOn = true;
@@ -130,4 +155,13 @@ public class FlashlightController : MonoBehaviour
     }
 
     public bool IsOn => isOn;
+
+    public float BatteryLevel => batteryLevel;
+
+    public void ChargeBattery(float amount)
+    {
+        batteryLevel = Mathf.Clamp(batteryLevel + amount, 0f, 100f);
+        onBatteryChanged?.Invoke(batteryLevel);
+        Debug.Log($"[FlashlightController] Batería recargada. Nivel actual: {batteryLevel:F1}%");
+    }
 }

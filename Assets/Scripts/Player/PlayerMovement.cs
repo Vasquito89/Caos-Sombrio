@@ -122,6 +122,7 @@ public class PlayerMovement : MonoBehaviour
             float moveSpeed = moveDirection.magnitude;
 
             playerAnimator.SetFloat("Vertical", moveSpeed, 0.1f, Time.deltaTime);
+            playerAnimator.SetFloat("Horizontal", moveSpeed, 0.1f, Time.deltaTime);
         }
     }
 
