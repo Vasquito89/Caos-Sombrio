@@ -21,10 +21,7 @@ public class ShadowEnemy : MonoBehaviour
     [SerializeField] private float waitTimeAtWaypoint = 1.5f;
 
     [Header("Confinamiento de Zona (NavMesh Area)")]
-    // Mascara de areas del NavMesh en las que esta sombra tiene permitido moverse.
-    // Usar "Everything" para que use todas las areas (comportamiento por defecto).
-    // Para confinar a una habitacion, crear un Area personalizada en el NavMesh
-    // (ej. "Apartment_01") y seleccionar SOLO esa area en esta mascara.
+    
     [SerializeField] private LayerMask navMeshAreaMask = -1; // -1 = NavMesh.AllAreas
 
     [Header("Deteccion del Jugador")]
@@ -108,10 +105,7 @@ public class ShadowEnemy : MonoBehaviour
                            "Asegurate de que el jugador tenga ese tag.");
         }
 
-        // Aplicar la mascara de areas del NavMesh para confinar el movimiento a esta zona.
-        // Esto es clave para que una sombra del piso 3 no intente llegar al piso 1.
-        if (navMeshAreaMask != -1)
-            agent.areaMask = navMeshAreaMask;
+        
 
         // Iniciar en modo patrulla
         TransitionToState(ShadowState.Patrol);
@@ -299,11 +293,7 @@ public class ShadowEnemy : MonoBehaviour
         return stimulus.IsBeingRationalized;
     }
 
-    /// <summary>
-    /// Verifica si un destino puede alcanzarse desde la posicion actual
-    /// usando SOLO las areas del NavMesh asignadas a esta sombra.
-    /// Evita que la sombra intente perseguir al jugador a zonas inaccessibles.
-    /// </summary>
+    
     private bool IsDestinationReachable(Vector3 destination)
     {
         NavMeshPath path = new NavMeshPath();
@@ -365,10 +355,7 @@ public class ShadowEnemy : MonoBehaviour
         shadowRenderer.SetPropertyBlock(mpb);
     }
 
-    /// <summary>
-    /// Corrutina que reduce el alpha gradualmente hasta 0 y luego destruye el objeto.
-    /// Produce el efecto de disipacion de la sombra al encender la luz.
-    /// </summary>
+    
     private IEnumerator FadeOutAndDestroy()
     {
         if (shadowRenderer == null)
@@ -402,11 +389,7 @@ public class ShadowEnemy : MonoBehaviour
     //  METODOS PUBLICOS DE CONTROL
     // =========================================================================
 
-    /// <summary>
-    /// Inyecta waypoints de forma dinamica al ser instanciada por ShadowSpawnerTrigger.
-    /// Permite que cada sombra reciba su set de rutas sin modificar el prefab.
-    /// Si ya se inyectaron waypoints, esta llamada no tiene efecto.
-    /// </summary>
+    
     public void InjectPatrolPoints(Transform[] newWaypoints)
     {
         if (waypointsInjected)
@@ -429,11 +412,7 @@ public class ShadowEnemy : MonoBehaviour
         Debug.Log($"[ShadowEnemy] '{gameObject.name}': {newWaypoints.Length} waypoints inyectados.");
     }
 
-    /// <summary>
-    /// Disuelta la sombra con una animacion de desvanecimiento y la destruye.
-    /// Conectar a LightSwitchInteractable para eliminar la sombra al encender la luz.
-    /// Equivale al antiguo 'DesactivarSombra()' mencionado en el GDD.
-    /// </summary>
+    
     public void DismissShadow()
     {
         if (currentState == ShadowState.Dismissed) return;
@@ -443,23 +422,16 @@ public class ShadowEnemy : MonoBehaviour
         Debug.Log($"[ShadowEnemy] '{gameObject.name}' disipandose por la luz...");
     }
 
-    /// <summary>
-    /// Alias en espaniol para compatibilidad con la nomenclatura del GDD.
-    /// Llama internamente a DismissShadow().
-    /// </summary>
+    
     public void DesactivarSombra() => DismissShadow();
 
-    /// <summary>
-    /// Fuerza una transicion de estado desde sistemas externos (eventos de climax, etc).
-    /// </summary>
+    
     public void ForceState(ShadowState state)
     {
         TransitionToState(state);
     }
 
-    /// <summary>
-    /// Teleporta la sombra a una nueva posicion valida del NavMesh y vuelve a patrullar.
-    /// </summary>
+    
     public void Teleport(Vector3 position)
     {
         if (NavMesh.SamplePosition(position, out NavMeshHit hit, 2f, agent.areaMask))

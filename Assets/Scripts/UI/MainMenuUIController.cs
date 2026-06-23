@@ -1,9 +1,6 @@
 using UnityEngine;
 
-/// <summary>
-/// Controla la interfaz del Menu Principal, gestionando la activacion y desactivacion
-/// de los paneles de Opciones, Instructivo y Creditos (para mostrar los datos del examen).
-/// </summary>
+
 public class MainMenuUIController : MonoBehaviour
 {
     [Header("Paneles de la Interfaz")]
@@ -24,10 +21,7 @@ public class MainMenuUIController : MonoBehaviour
         if (creditsPanel != null) creditsPanel.SetActive(false);
     }
 
-    /// <summary>
-    /// Activa el panel de creditos y desactiva los demas paneles abiertos.
-    /// Aqui se mostrara: "Damian Exequiel Garnica" y "Surenio Producciones".
-    /// </summary>
+
     public void OpenCreditsPanel()
     {
         Debug.Log("[MainMenuUIController] Mostrando Panel de Creditos.");
@@ -36,9 +30,7 @@ public class MainMenuUIController : MonoBehaviour
         if (instructivePanel != null) instructivePanel.SetActive(false);
     }
 
-    /// <summary>
-    /// Activa el panel de opciones y desactiva los demas.
-    /// </summary>
+
     public void OpenOptionsPanel()
     {
         Debug.Log("[MainMenuUIController] Mostrando Panel de Opciones.");
@@ -47,9 +39,7 @@ public class MainMenuUIController : MonoBehaviour
         if (instructivePanel != null) instructivePanel.SetActive(false);
     }
 
-    /// <summary>
-    /// Activa el panel de instructivo y desactiva los demas.
-    /// </summary>
+
     public void OpenInstructivePanel()
     {
         Debug.Log("[MainMenuUIController] Mostrando Panel de Instructivo.");
@@ -58,9 +48,7 @@ public class MainMenuUIController : MonoBehaviour
         if (optionsPanel != null) optionsPanel.SetActive(false);
     }
 
-    /// <summary>
-    /// Cierra todos los paneles secundarios, volviendo a la vista principal del menu.
-    /// </summary>
+
     public void CloseAllPanels()
     {
         Debug.Log("[MainMenuUIController] Cerrando todos los paneles.");

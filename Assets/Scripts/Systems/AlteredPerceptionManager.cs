@@ -3,32 +3,14 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
-/// <summary>
-/// Orquesta los efectos visuales de percepcion alterada y gestiona la secuencia
-/// del Climax Final: la Falsa Victoria y el inicio de la fase de escape.
-/// </summary>
+
 public class AlteredPerceptionManager : MonoBehaviour
 {
-    // =========================================================================
-    //  EVENTOS SYSTEM.ACTION
-    // =========================================================================
-
-    /// <summary>
-    /// Paso 1: Se dispara cuando comienza la falsa victoria.
-    /// La UI debe mostrar la pantalla de victoria y reproducir audio pacifico.
-    /// </summary>
-    public static event Action OnFakeVictoryStarted;
-
-    /// <summary>
-    /// Paso 3: Se dispara 2 segundos despues de la falsa victoria.
-    /// La UI debe destruir/distorsionar la pantalla de victoria con glitch visual y sonoro.
-    /// </summary>
+    
+    public static event Action OnFakeVictoryStarted;  
     public static event Action OnFakeVictoryBroken;
-
-    /// <summary>
-    /// Paso 6: Se dispara cuando el objetivo cambia a escapar del edificio.
-    /// </summary>
     public static event Action OnEscapeObjectiveActivated;
 
 
@@ -57,8 +39,8 @@ public class AlteredPerceptionManager : MonoBehaviour
     [SerializeField] private GameObject fakeVictoryCanvas;
     // Canvas o panel final de Victoria Real
     [SerializeField] private GameObject realVictoryCanvas;
-    // Nombre opcional de la escena de victoria real (si se prefiere cambiar de escena)
-    [SerializeField] private string realVictorySceneName = "";
+    [SerializeField] private Button realVictoryContinueButton;
+
 
     [Header("Fake Victory - Building Lights")]
     [SerializeField] private GameObject buildingLightsParent;
@@ -92,6 +74,9 @@ public class AlteredPerceptionManager : MonoBehaviour
     private GameObject spawnedShadowInstance = null;
     private bool isGameOverTriggered = false;
 
+    
+    public bool FakeVictoryCompleted { get; private set; } = false;
+
 
     // =========================================================================
     //  INICIALIZACION
@@ -123,6 +108,8 @@ public class AlteredPerceptionManager : MonoBehaviour
         ExitTrigger.OnPlayerEscaped += HandlePlayerEscaped;
 
         Debug.Log("[AlteredPerceptionManager] Inicializado. Esperando condiciones de victoria...");
+
+        realVictoryContinueButton.onClick.AddListener(() =>{SceneManager.LoadScene("MenuPrincipal");});
     }
 
     private void OnDestroy()
@@ -169,6 +156,7 @@ public class AlteredPerceptionManager : MonoBehaviour
     //  PUNTO DE ENTRADA PUBLICO
     // =========================================================================
 
+    
     public void VerifyVictoryCondition()
     {
         if (fakeVictoryTriggered) return;
@@ -199,7 +187,7 @@ public class AlteredPerceptionManager : MonoBehaviour
         Debug.Log("[AlteredPerceptionManager] PASO 3 - Desactivando Canvas Falso y aplicando Glitch.");
         if (fakeVictoryCanvas != null)
         {
-            fakeVictoryCanvas.SetActive(false); // Desactiva bruscamente
+            fakeVictoryCanvas.SetActive(false);
         }
         OnFakeVictoryBroken?.Invoke();
 
@@ -229,11 +217,15 @@ public class AlteredPerceptionManager : MonoBehaviour
 
         SpawnGiantShadowBehindPlayer();
 
-        // PASO 6: Cambiar el objetivo
+        // PASO 6: Activar el trigger de escape y marcar la falsa victoria como completada
         if (mainExitTrigger != null)
         {
             mainExitTrigger.Activate();
         }
+
+        // Gate: solo después de activar el exit trigger, la victoria real queda habilitada
+        FakeVictoryCompleted = true;
+        Debug.Log("[AlteredPerceptionManager] PASO 6 - FakeVictoryCompleted = true. ExitTrigger activo.");
 
         OnEscapeObjectiveActivated?.Invoke();
     }
@@ -266,10 +258,7 @@ public class AlteredPerceptionManager : MonoBehaviour
         ShadowSmokeEffect.PlayBurstAtPosition(spawnPosition, giantShadowSmokePrefab);
     }
 
-    /// <summary>
-    /// Metodo llamado cuando la sombra atrapa al jugador.
-    /// Invoca el GameOver en el AnxietySystem para que la pantalla de derrota se active.
-    /// </summary>
+    
     private void CatchPlayer()
     {
         isGameOverTriggered = true;
@@ -282,10 +271,7 @@ public class AlteredPerceptionManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Maneja el evento de escape exitoso del jugador.
-    /// Carga el Canvas de victoria real o la escena de victoria real.
-    /// </summary>
+    
     private void HandlePlayerEscaped()
     {
         Debug.Log("[AlteredPerceptionManager] El jugador ha escapado. Victoria Real!");
@@ -298,10 +284,7 @@ public class AlteredPerceptionManager : MonoBehaviour
         {
             realVictoryCanvas.SetActive(true);
         }
-        else if (!string.IsNullOrEmpty(realVictorySceneName))
-        {
-            SceneManager.LoadScene(realVictorySceneName);
-        }
+        
         else
         {
             Debug.LogWarning("[AlteredPerceptionManager] No se ha asignado realVictoryCanvas ni realVictorySceneName.");

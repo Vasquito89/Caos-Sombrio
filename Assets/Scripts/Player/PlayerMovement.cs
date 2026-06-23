@@ -13,6 +13,9 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private LayerMask groundLayer;
     [SerializeField] private Transform cameraTransform;
 
+    [Header("Audio")]
+    [SerializeField] private AudioSource footstepAudioSource;
+
 
     private CharacterController controller;
     private Vector3 velocity;
@@ -124,6 +127,8 @@ public class PlayerMovement : MonoBehaviour
             playerAnimator.SetFloat("Vertical", moveSpeed, 0.1f, Time.deltaTime);
             playerAnimator.SetFloat("Horizontal", moveSpeed, 0.1f, Time.deltaTime);
         }
+
+        footstepAudioSource.Play();
     }
 
 

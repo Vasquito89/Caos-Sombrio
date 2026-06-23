@@ -4,11 +4,7 @@ using UnityEngine.UI;
 using TMPro;
 
 
-/// <summary>
-/// Controla todos los elementos visuales del HUD relacionados con la ansiedad del jugador.
-/// Escucha los eventos del AnxietySystem y de AlteredPerceptionManager para reaccionar
-/// a los estados normales de ansiedad y a la secuencia del Climax Final.
-/// </summary>
+
 public class AnxietyHUD : MonoBehaviour
 {
     [Header("Display de BPM")]
@@ -36,16 +32,10 @@ public class AnxietyHUD : MonoBehaviour
     // ─── Climax Final - Falsa Victoria ───────────────────────────────────────
 
     [Header("Climax Final - Pantalla de Victoria")]
-    // Panel raiz de la pantalla de victoria que se muestra durante la falsa victoria.
-    // Este panel sera destruido/desactivado cuando se rompa la ilusion.
     [SerializeField] private GameObject victoryScreenPanel;
-    // Fuente de audio que reproduce la musica pacifica de victoria.
-    // Se detiene cuando se dispara OnFakeVictoryBroken.
     [SerializeField] private AudioSource victoryPeacefulAudio;
 
     [Header("Climax Final - Efectos de Glitch")]
-    // Imagen de overlay que simula el ruido estatico sobre toda la pantalla.
-    // Debe ser un Image que cubra todo el Canvas con una textura de ruido.
     [SerializeField] private Image staticNoiseOverlay;
     // Duracion del efecto de parpadeo estatico al romper la victoria.
     [SerializeField] private float staticFlickerDuration = 1.5f;
@@ -53,8 +43,6 @@ public class AnxietyHUD : MonoBehaviour
     [SerializeField] private float staticFlickerFrequency = 20f;
 
     [Header("Climax Final - Bordes de Panico")]
-    // Image de overlay que cubre los bordes de la pantalla con rojo pulsante.
-    // Diferente a la vignette normal: es un efecto agresivo de panico extremo.
     [SerializeField] private Image panicEdgeOverlay;
     // Velocidad del parpadeo del borde rojo de panico.
     [SerializeField] private float panicEdgePulseSpeed = 8f;
@@ -62,8 +50,6 @@ public class AnxietyHUD : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float maxPanicEdgeAlpha = 0.85f;
 
     [Header("Climax Final - Aberracion Cromatica")]
-    // Referencia al Material del shader de aberracion cromatica aplicado a un RawImage de overlay.
-    // Si se usa URP Post-Processing, este campo puede dejarse vacio y manejarse via Volume.
     [SerializeField] private Material chromaticAberrationMaterial;
     // Nombre de la propiedad del shader que controla la intensidad de la aberracion.
     [SerializeField] private string chromaticIntensityProperty = "_ChromaticIntensity";
@@ -78,8 +64,7 @@ public class AnxietyHUD : MonoBehaviour
     private float pulseTimer = 0f;           // Timer para el pulso del BPM
     private Color targetColor;               // Color objetivo segun nivel
 
-    // Bandera que indica si estamos en la fase de panico extremo del climax final.
-    // Activa los efectos visuales especiales de la HUD.
+    
     private bool isFinalChallengeActive = false;
 
     // Corrutina del efecto de estatico para poder detenerla si es necesario
@@ -198,10 +183,7 @@ public class AnxietyHUD : MonoBehaviour
     //  HANDLERS DE EVENTOS DEL CLIMAX FINAL (AlteredPerceptionManager)
     // =========================================================================
 
-    /// <summary>
-    /// Responde al Paso 1 de la secuencia: muestra la pantalla de victoria normal.
-    /// El jugador cree que gano. Audio pacifico encendido.
-    /// </summary>
+    
     private void HandleFakeVictoryStarted()
     {
         Debug.Log("[AnxietyHUD] Falsa Victoria iniciada. Mostrando pantalla de Victoria.");
@@ -218,10 +200,6 @@ public class AnxietyHUD : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Responde al Paso 3 de la secuencia: destruye/distorsiona la pantalla de victoria
-    /// y activa los efectos visuales de panico: estatico, aberracion cromatica y borde rojo.
-    /// </summary>
     private void HandleFakeVictoryBroken()
     {
         Debug.Log("[AnxietyHUD] Victoria rota! Aplicando efectos de glitch y panico.");
@@ -231,7 +209,6 @@ public class AnxietyHUD : MonoBehaviour
             victoryPeacefulAudio.Stop();
 
         // Destruir/ocultar la pantalla de victoria con un efecto de distorsion
-        // En lugar de solo desactivar, se puede animar con un Animator o via codigo
         if (victoryScreenPanel != null)
             victoryScreenPanel.SetActive(false);
 
@@ -246,27 +223,21 @@ public class AnxietyHUD : MonoBehaviour
         // La fase de panico extremo de la HUD comienza aqui
         isFinalChallengeActive = true;
     }
-
-    /// <summary>
-    /// Responde al Paso 6: el objetivo cambio a escapar.
-    /// Puede actualizar textos de objetivo en la HUD, etc.
-    /// </summary>
     private void HandleEscapeObjectiveActivated()
     {
         Debug.Log("[AnxietyHUD] Objetivo actualizado: ESCAPAR DEL EDIFICIO.");
-        // Aqui se puede actualizar un texto de objetivo en pantalla,
+        // se puede actualizar un texto de objetivo en pantalla,
         // activar un indicador de flecha hacia la salida, etc.
     }
+
+
 
 
     // =========================================================================
     //  EFECTOS VISUALES DEL CLIMAX FINAL
     // =========================================================================
 
-    /// <summary>
-    /// Corrutina que aplica un parpadeo erratico del overlay de ruido estatico
-    /// durante la ruptura de la falsa victoria.
-    /// </summary>
+    
     private IEnumerator StaticFlickerRoutine()
     {
         if (staticNoiseOverlay == null) yield break;
@@ -295,10 +266,7 @@ public class AnxietyHUD : MonoBehaviour
         staticFlickerCoroutine = null;
     }
 
-    /// <summary>
-    /// Aplica la aberracion cromatica al maximo instantaneamente.
-    /// Si el Material fue asignado, modifica la propiedad del shader directamente.
-    /// </summary>
+    
     private void ApplyMaxChromaticAberration()
     {
         if (chromaticAberrationMaterial != null &&
@@ -314,10 +282,7 @@ public class AnxietyHUD : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Actualiza el efecto de borde rojo pulsante durante la fase de panico extremo.
-    /// Se llama cada frame cuando isFinalChallengeActive es true.
-    /// </summary>
+    
     private void UpdatePanicEdgeEffect()
     {
         if (panicEdgeOverlay == null) return;

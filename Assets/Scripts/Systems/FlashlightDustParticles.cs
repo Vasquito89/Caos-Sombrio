@@ -2,17 +2,6 @@ using System.Collections;
 using UnityEngine;
 
 
-/// <summary>
-/// Crea el efecto de polvo flotando visible en el haz de luz de la linterna.
-/// Se coloca como componente hijo del GameObject de la linterna.
-///
-/// Requiere un componente ParticleSystem en el mismo GameObject (se crea por codigo
-/// si no existe, o puede asignarse uno ya configurado en el Inspector).
-///
-/// Efecto conseguido: particulas muy pequenas, semitransparentes, que flotan y se
-/// mueven lentamente dentro del cono de luz. La emision se activa/desactiva
-/// automaticamente segun el estado de la linterna y aumenta su opacidad con la ansiedad.
-/// </summary>
 [RequireComponent(typeof(ParticleSystem))]
 public class FlashlightDustParticles : MonoBehaviour
 {
@@ -99,10 +88,7 @@ public class FlashlightDustParticles : MonoBehaviour
         dustParticleSystem.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
     }
 
-    /// <summary>
-    /// Configura todos los modulos del ParticleSystem por codigo.
-    /// Esto permite ajustar el efecto sin depender de que el artista configure el prefab.
-    /// </summary>
+
     private void ConfigureParticleSystem()
     {
         // --- Modulo Main ---
@@ -182,10 +168,7 @@ public class FlashlightDustParticles : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Interpola la emision y el color del polvo segun el nivel de ansiedad actual.
-    /// A mayor ansiedad, mas particulas y con color levemente violaceo/oscuro.
-    /// </summary>
+    
     private void UpdateParticlesWithAnxiety(float anxietyNorm)
     {
         // Interpolar tasa de emision: mas ansiedad = mas polvo perturbado

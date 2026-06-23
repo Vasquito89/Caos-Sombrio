@@ -1,15 +1,10 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>
-/// Controla la pantalla de GameOver (Derrota).
-/// Se suscribe al evento del AnxietySystem para activarse de forma automatica
-/// tras 3 desmayos del jugador o si es atrapado en el climax.
-/// </summary>
+
 public class GameOverUIController : MonoBehaviour
 {
     [Header("UI Componentes")]
-    // Objeto contenedor de la pantalla de GameOver (para activarlo/desactivarlo)
     [SerializeField] private GameObject gameOverPanel;
 
     [Header("Botones de Control")]
@@ -48,9 +43,7 @@ public class GameOverUIController : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Muestra la pantalla de GameOver. Invocado por el evento onGameOver del AnxietySystem.
-    /// </summary>
+    
     public void ShowGameOverScreen()
     {
         Debug.Log("[GameOverUIController] Activando pantalla de GameOver.");
@@ -64,12 +57,10 @@ public class GameOverUIController : MonoBehaviour
         Cursor.visible = true;
 
         // Detener el tiempo de juego si es necesario (opcional)
-        // Time.timeScale = 0f;
+        Time.timeScale = 0f;
     }
 
-    /// <summary>
-    /// Accion para el boton "Reintentar".
-    /// </summary>
+    
     private void OnRetryClicked()
     {
         // Reanudar el tiempo de juego si se habia pausado
@@ -86,9 +77,7 @@ public class GameOverUIController : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Accion para el boton "Menu Principal".
-    /// </summary>
+    
     private void OnMainMenuClicked()
     {
         // Reanudar el tiempo de juego si se habia pausado
@@ -101,7 +90,7 @@ public class GameOverUIController : MonoBehaviour
         else
         {
             // Fallback de carga directa
-            UnityEngine.SceneManagement.SceneManager.LoadScene("menu principal");
+            UnityEngine.SceneManagement.SceneManager.LoadScene("MenuPrincipal");
         }
     }
 }

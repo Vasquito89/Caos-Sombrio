@@ -3,15 +3,7 @@ using UnityEngine;
 using UnityEngine.AI;
 
 
-/// <summary>
-/// Spawner basado en Trigger que instancia un ShadowEnemy cuando el jugador
-/// cruza un umbral (pasillo, puerta, entrada a un departamento).
-/// 
-/// Configuracion en Unity:
-///   - Este GameObject necesita un BoxCollider con "Is Trigger" = true.
-///   - Asignar shadowPrefab y spawnPoint en el Inspector.
-///   - El prefab debe tener el componente ShadowEnemy y un NavMeshAgent.
-/// </summary>
+
 [RequireComponent(typeof(Collider))]
 public class ShadowSpawnerTrigger : MonoBehaviour
 {
@@ -20,35 +12,24 @@ public class ShadowSpawnerTrigger : MonoBehaviour
     // =========================================================================
 
     [Header("Prefab a Instanciar")]
-    // Prefab del ShadowEnemy que se instanciara al cruzar el umbral
     [SerializeField] private GameObject shadowPrefab;
 
     [Header("Punto de Aparicion")]
-    // Transform exacto donde aparecera la sombra (posicion + rotacion)
-    // Si no se asigna, se usa la posicion de este GameObject + spawnOffset
     [SerializeField] private Transform spawnPoint;
 
     [Header("Configuracion de Spawneo")]
-    // Offset adicional respecto al spawnPoint (o a este Transform si spawnPoint es null)
     [SerializeField] private Vector3 spawnOffset = Vector3.zero;
-    // Si es true, la sombra solo se spawnea una vez por sesion de juego
     [SerializeField] private bool spawnOnlyOnce = false;
-    // Retardo en segundos antes de que la sombra aparezca al cruzar el trigger
     [SerializeField] private float spawnDelay = 0.5f;
 
     [Header("Waypoints del Piso/Habitacion")]
-    // Waypoints exclusivos de esta zona. Se inyectan al ShadowEnemy tras el spawn
-    // para confinarlo a esta area del edificio sin necesidad de configurarlo en el prefab.
     [SerializeField] private Transform[] roomWaypoints;
 
     [Header("Efecto de Humo al Spawn")]
-    // Prefab opcional con ShadowSmokeEffect. Si no se asigna, el humo se crea por codigo.
     [SerializeField] private GameObject smokePrefab;
-    // Si es false, no se genera humo en este spawner
     [SerializeField] private bool enableSmokeEffect = true;
 
     [Header("Debug")]
-    // Dibuja un icono en la escena para identificar los spawners facilmente
     [SerializeField] private bool showGizmos = true;
 
 
@@ -86,17 +67,23 @@ public class ShadowSpawnerTrigger : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        // Solo reaccionar al jugador
+        Debug.Log("Spawned instance =" + spawnedShadowInstance);
+        // 1. Solo reaccionar al jugador
         if (!other.CompareTag("Player")) return;
 
-        // Si ya se spawnea y la limitacion esta activa, ignorar
+        // 2. Si ya hay una sombra viva controlada por este spawner, NO hacer nada
+        Debug.Log($"Spawned instance = {spawnedShadowInstance}");
+        Debug.Log($"Has spawned = {hasSpawned}");
+        if (spawnedShadowInstance != null) return;
+
+        // 3. Si está configurado para un solo uso y ya cumplió su ciclo, ignorar
         if (spawnOnlyOnce && hasSpawned)
         {
-            Debug.Log($"[ShadowSpawnerTrigger] '{gameObject.name}': ya se spawnee una sombra. Ignorando.");
+            Debug.Log($"[ShadowSpawnerTrigger] '{gameObject.name}': ya se spawneo una sombra en esta sesion. Ignorando.");
             return;
         }
 
-        // Iniciar el spawn con el retardo configurado
+        // Iniciar el spawn de manera segura
         StartCoroutine(SpawnWithDelay());
     }
 
@@ -105,20 +92,14 @@ public class ShadowSpawnerTrigger : MonoBehaviour
     //  LOGICA DE SPAWNEO
     // =========================================================================
 
-    /// <summary>
-    /// Espera el spawnDelay configurado y luego instancia la sombra.
-    /// El retardo permite que el jugador ya este dentro antes de que aparezca.
-    /// </summary>
+   
     private IEnumerator SpawnWithDelay()
     {
         yield return new WaitForSeconds(spawnDelay);
         SpawnShadow();
     }
 
-    /// <summary>
-    /// Instancia el shadowPrefab en la posicion del spawnPoint y le inyecta
-    /// los waypoints de la habitacion para confinar su patrullaje.
-    /// </summary>
+    
     private void SpawnShadow()
     {
         if (shadowPrefab == null)
@@ -156,10 +137,7 @@ public class ShadowSpawnerTrigger : MonoBehaviour
         Debug.Log($"[ShadowSpawnerTrigger] Sombra spawneada en {navHit.position} por '{gameObject.name}'.");
     }
 
-    /// <summary>
-    /// Transfiere los waypoints de esta habitacion al ShadowEnemy instanciado.
-    /// Llama al metodo publico InjectPatrolPoints() del ShadowEnemy.
-    /// </summary>
+    
     private void InjectRoomWaypoints(GameObject shadowObj)
     {
         if (roomWaypoints == null || roomWaypoints.Length == 0)
@@ -205,10 +183,7 @@ public class ShadowSpawnerTrigger : MonoBehaviour
     //  METODOS PUBLICOS DE CONTROL
     // =========================================================================
 
-    /// <summary>
-    /// Permite al spawner volver a crear una sombra en la proxima entrada del jugador.
-    /// Util para reactivar la zona si la sombra fue eliminada por la luz.
-    /// </summary>
+    
     public void ResetSpawner()
     {
         hasSpawned = false;
@@ -216,18 +191,15 @@ public class ShadowSpawnerTrigger : MonoBehaviour
         Debug.Log($"[ShadowSpawnerTrigger] '{gameObject.name}' reseteado. Listo para un nuevo spawn.");
     }
 
-    /// <summary>
-    /// Devuelve la instancia viva de la sombra de este spawner.
-    /// Puede ser null si aun no se ha spawneado o si fue destruida.
-    /// </summary>
+    
     public GameObject GetSpawnedInstance() => spawnedShadowInstance;
 
-    /// <summary>
-    /// Elimina la sombra activa con efecto de disipacion.
-    /// Pensado para conectarse al evento de interruptor de luz de esta habitacion.
-    /// </summary>
+    
     public void DismissActiveShadow()
     {
+        Debug.Log(spawnedShadowInstance == null ? $"[ShadowSpawnerTrigger] '{gameObject.name}': No hay sombra activa para disolver." : $"[ShadowSpawnerTrigger] '{gameObject.name}': Disolviendo sombra activa.");
+        Debug.Log(hasSpawned ? $"[ShadowSpawnerTrigger] '{gameObject.name}': hasSpawned = true." : $"[ShadowSpawnerTrigger] '{gameObject.name}': hasSpawned = false.");
+
         if (spawnedShadowInstance == null)
         {
             Debug.Log($"[ShadowSpawnerTrigger] '{gameObject.name}': No hay sombra activa para disolver.");
@@ -246,8 +218,13 @@ public class ShadowSpawnerTrigger : MonoBehaviour
             Destroy(spawnedShadowInstance);
         }
 
-        // Detener el humo continuo si la sombra lo tenia adjunto
-        ShadowSmokeEffect smoke = spawnedShadowInstance != null
+        spawnedShadowInstance = null;
+        hasSpawned = false;
+        Debug.Log($"[ShadowSpawnerTrigger] Sombra enviada a disolver. Spawner reseteado con exito.");
+    
+
+    // Detener el humo continuo si la sombra lo tenia adjunto
+    ShadowSmokeEffect smoke = spawnedShadowInstance != null
             ? spawnedShadowInstance.GetComponentInChildren<ShadowSmokeEffect>()
             : null;
         if (smoke != null)

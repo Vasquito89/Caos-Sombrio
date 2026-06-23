@@ -43,19 +43,10 @@ public class AnxietySystem : MonoBehaviour
     public UnityEvent onFaintEnded;
     public UnityEvent onGameOver;
 
-    // --- Eventos System.Action para desacoplamiento total con otros sistemas ---
-    // Permite suscripción directa sin necesidad de pasar por el Inspector
-
-    /// <summary>
-    /// Disparado cuando el juego entra en la fase de Desafío Final (escape).
-    /// Los suscriptores deben activar comportamientos de pánico extremo.
-    /// </summary>
+    
     public static event Action OnFinalChallengeStarted;
 
-    /// <summary>
-    /// Disparado en cada frame cuando se acumula el multiplicador de pánico final.
-    /// Útil para que la HUD refleje la ganancia acelerada de ansiedad.
-    /// </summary>
+    
     public static event Action<float> OnFinalChallengeTick;
 
 
@@ -141,11 +132,7 @@ public class AnxietySystem : MonoBehaviour
         onAnxietyChanged?.Invoke(AnxietyNormalized);
     }
 
-    /// <summary>
-    /// Activa la fase del Desafío Final. Fuerza el pánico extremo de forma instantánea
-    /// multiplicando la ganancia de ansiedad por el modificador configurado.
-    /// Invocado desde AlteredPerceptionManager en el Paso 5 de la secuencia.
-    /// </summary>
+    
     public void ActivateFinalChallenge()
     {
         if (isInFinalChallenge) return; // Evitar activaciones duplicadas
@@ -170,10 +157,7 @@ public class AnxietySystem : MonoBehaviour
     //  LÓGICA INTERNA
     // =========================================================================
 
-    /// <summary>
-    /// Aplica la presión de pánico continua durante la fase de escape.
-    /// La ansiedad sube permanentemente, contrarrestando el decaimiento natural.
-    /// </summary>
+    
     private void ApplyFinalChallengePanic()
     {
         // La ganancia de ansiedad por segundo es el multiplicador aplicado al decaimiento natural
@@ -313,15 +297,5 @@ public class AnxietySystem : MonoBehaviour
         onFaintEnded?.Invoke();
 
         Debug.Log($"[AnxietySystem] Recuperación completada. Inmunidad por {immunityCooldown}s.");
-    }
-
-
-    private void OnGUI()
-    {
-        // Solo visible en el Editor en modo Play para debugging
-#if UNITY_EDITOR
-        GUI.Label(new Rect(10, 10, 400, 20),
-            $"Ansiedad: {currentAnxiety:F1} | BPM: {HeartRateBPM:F0} | Estado: {currentLevel} | FinalChallenge: {isInFinalChallenge}");
-#endif
     }
 }

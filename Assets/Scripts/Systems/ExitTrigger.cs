@@ -2,13 +2,7 @@ using System;
 using UnityEngine;
 
 
-/// <summary>
-/// Trigger de escape ubicado en la puerta principal del edificio.
-/// Permanece inactivo durante la fase normal del juego.
-/// Solo se activa en el Paso 6 de la secuencia del Climax Final,
-/// cuando el jugador necesita escapar como nueva condicion de victoria real.
-/// Requiere un Collider con "Is Trigger" activado en el mismo GameObject.
-/// </summary>
+
 [RequireComponent(typeof(Collider))]
 public class ExitTrigger : MonoBehaviour
 {
@@ -16,10 +10,7 @@ public class ExitTrigger : MonoBehaviour
     //  EVENTO - Victoria real por escape
     // =========================================================================
 
-    /// <summary>
-    /// Disparado cuando el jugador cruza el trigger de escape exitosamente.
-    /// Los suscriptores deben activar la pantalla de victoria real y detener el juego.
-    /// </summary>
+    
     public static event Action OnPlayerEscaped;
 
 
@@ -28,10 +19,7 @@ public class ExitTrigger : MonoBehaviour
     // =========================================================================
 
     [Header("Exit Trigger Configuration")]
-    // Tag del jugador para filtrar las colisiones del trigger
     [SerializeField] private string playerTag = "Player";
-
-    // Indicador visual/sonoro que se activa cuando el trigger se habilita (opcional)
     [SerializeField] private GameObject exitIndicator;
 
 
@@ -41,6 +29,9 @@ public class ExitTrigger : MonoBehaviour
 
     // El trigger comienza desactivado. Solo AlteredPerceptionManager puede activarlo.
     private bool isActive = false;
+
+    // Referencia cacheada al AlteredPerceptionManager para el gate check
+    private AlteredPerceptionManager _apmCache;
 
 
     // =========================================================================
@@ -57,15 +48,22 @@ public class ExitTrigger : MonoBehaviour
             exitIndicator.SetActive(false);
     }
 
+    private void Start()
+    {
+        // Cachear referencia una sola vez
+        _apmCache = FindAnyObjectByType<AlteredPerceptionManager>();
+
+        if (_apmCache == null)
+            Debug.LogWarning("[ExitTrigger] No se encontro AlteredPerceptionManager en la escena. " +
+                             "La victoria real no podra verificarse.");
+    }
+
 
     // =========================================================================
     //  METODO PUBLICO DE ACTIVACION
     // =========================================================================
 
-    /// <summary>
-    /// Activa el trigger de escape. Llamado por AlteredPerceptionManager en el Paso 6.
-    /// Una vez activo, el primer jugador que lo cruce gana la partida.
-    /// </summary>
+    
     public void Activate()
     {
         if (isActive) return;
@@ -90,6 +88,14 @@ public class ExitTrigger : MonoBehaviour
         // Solo reaccionar si el trigger esta activo y el colisionador es el jugador
         if (!isActive) return;
         if (!other.CompareTag(playerTag)) return;
+
+        // GATE: verificar que la falsa victoria haya completado su secuencia
+        if (_apmCache == null || !_apmCache.FakeVictoryCompleted)
+        {
+            Debug.LogWarning("[ExitTrigger] El jugador cruzo la puerta pero FakeVictoryCompleted es false. " +
+                             "La victoria real NO se otorga.");
+            return;
+        }
 
         Debug.Log("[ExitTrigger] El jugador cruzo la puerta de escape. VICTORIA REAL!");
 

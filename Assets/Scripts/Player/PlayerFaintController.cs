@@ -2,7 +2,6 @@ using UnityEngine;
 
 public class PlayerFaintController : MonoBehaviour
 {
-    //[Header("Componentes Requeridos")]
     private CharacterController characterController;
     private Animator animator;
 

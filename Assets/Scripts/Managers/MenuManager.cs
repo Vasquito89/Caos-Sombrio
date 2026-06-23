@@ -9,13 +9,20 @@ public class MenuManager : MonoBehaviour
     [SerializeField] private Button instructiveButton;
     [SerializeField] private Button audioButton;
     [SerializeField] private Button closeButton;
+    [SerializeField] private Button creditsButton;
+
+    [Header("Paneles")]
+    [SerializeField] private GameObject creditsPanel;
 
     private void Start()
     {
+        creditsPanel.SetActive(false); // Asegura que el panel de créditos esté oculto al inicio
+
         playButton.onClick.AddListener(StartMatchScene);
         instructiveButton.onClick.AddListener(StartInstructiveScene);
         audioButton.onClick.AddListener(StartAudioScene);
         closeButton.onClick.AddListener(OnExit);
+        creditsButton.onClick.AddListener(StarCredits);
     }
 
 
@@ -36,5 +43,10 @@ public class MenuManager : MonoBehaviour
     private void StartAudioScene()
     {
         SceneManager.LoadScene("Audio");
+    }
+
+    private void StarCredits()
+    {
+        creditsPanel.SetActive(true);
     }
 }

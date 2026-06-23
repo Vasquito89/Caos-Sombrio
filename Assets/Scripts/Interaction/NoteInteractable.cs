@@ -36,7 +36,7 @@ public class NoteInteractable : MonoBehaviour, IInteractable
 
     private void Update()
     {
-        if (isReading && (Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.Escape)))
+        if (isReading &&  Input.GetKeyDown(KeyCode.Escape))
         {
             CloseNote();
         }

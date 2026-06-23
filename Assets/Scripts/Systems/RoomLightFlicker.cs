@@ -44,10 +44,7 @@ public class RoomLightFlicker : MonoBehaviour
     {
         roomLight = GetComponent<Light>();
 
-        // Si baseIntensity no fue seteada en el Inspector (= 0),
-        // usamos la intensidad actual del Light como valor base.
-        // Esto permite configurar cada luz directamente desde el
-        // componente Light sin tener que escribir el valor dos veces.
+        
         if (baseIntensity <= 0f)
             resolvedBaseIntensity = roomLight.intensity;
         else

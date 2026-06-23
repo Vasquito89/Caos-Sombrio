@@ -2,16 +2,7 @@ using System.Collections;
 using UnityEngine;
 
 
-/// <summary>
-/// Genera un efecto de humo negro/niebla densa en el punto donde spawnea una sombra.
-/// Hay dos usos:
-///   1. Colocar este script en el mismo prefab del ShadowEnemy: el humo se emite
-///      permanentemente desde los pies de la sombra mientras esta viva.
-///   2. Llamar a PlayBurstAtPosition() estaticamente desde ShadowSpawnerTrigger para
-///      una rafaga de humo puntual en el momento exacto del spawn (sin adjuntar al enemigo).
-///
-/// Modo recomendado: UNO DE CADA TIPO por zona.
-/// </summary>
+
 [RequireComponent(typeof(ParticleSystem))]
 public class ShadowSmokeEffect : MonoBehaviour
 {
@@ -97,9 +88,7 @@ public class ShadowSmokeEffect : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Configura todos los modulos del ParticleSystem por codigo.
-    /// </summary>
+    
     private void ConfigureParticleSystem()
     {
         if (isConfigured) return;
@@ -172,10 +161,7 @@ public class ShadowSmokeEffect : MonoBehaviour
     //  RAFAGA DE SPAWN
     // =========================================================================
 
-    /// <summary>
-    /// Emite una rafaga de humo de una sola vez y luego destruye este componente
-    /// cuando todas las particulas mueran. Usado en modo SpawnBurst.
-    /// </summary>
+    
     private void PlaySpawnBurst()
     {
         smokePS.Emit(burstParticleCount);
@@ -195,16 +181,7 @@ public class ShadowSmokeEffect : MonoBehaviour
     //  METODO ESTATICO - Invocado desde ShadowSpawnerTrigger o ShadowEnemy
     // =========================================================================
 
-    /// <summary>
-    /// Metodo de conveniencia estatico: instancia un efecto de humo de rafaga
-    /// en una posicion del mundo sin necesidad de tener el prefab asignado aqui.
-    ///
-    /// Uso desde ShadowSpawnerTrigger:
-    ///     ShadowSmokeEffect.PlayBurstAtPosition(spawnPos);
-    ///
-    /// O con un prefab personalizado:
-    ///     ShadowSmokeEffect.PlayBurstAtPosition(spawnPos, mySmokePrefab);
-    /// </summary>
+    
     public static void PlayBurstAtPosition(Vector3 position, GameObject smokePrefab = null)
     {
         GameObject smokeObj;
@@ -229,20 +206,14 @@ public class ShadowSmokeEffect : MonoBehaviour
     //  CONTROL DE EMISION CONTINUA (para Modo Continuous)
     // =========================================================================
 
-    /// <summary>
-    /// Detiene el humo continuo gradualmente.
-    /// Llamar desde ShadowEnemy.DismissShadow() para que el humo desaparezca con la sombra.
-    /// </summary>
+    
     public void StopSmoke()
     {
         if (smokeMode == SmokeMode.Continuous)
             smokePS.Stop(false, ParticleSystemStopBehavior.StopEmitting);
     }
 
-    /// <summary>
-    /// Ajusta la intensidad de emision en modo continuo segun la ansiedad.
-    /// Llamar externamente desde un controlador si se quiere el efecto dinamico.
-    /// </summary>
+    
     public void SetIntensity(float normalizedAnxiety)
     {
         if (smokeMode != SmokeMode.Continuous) return;
